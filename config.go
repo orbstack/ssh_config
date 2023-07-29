@@ -8,7 +8,7 @@
 // the host name to match on ("example.com"), and the second argument is the key
 // you want to retrieve ("Port"). The keywords are case insensitive.
 //
-// 		port := ssh_config.Get("myhost", "Port")
+//	port := ssh_config.Get("myhost", "Port")
 //
 // You can also manipulate an SSH config file and then print it or write it back
 // to disk.
@@ -727,13 +727,16 @@ func NewInclude(directives []string, hasEquals bool, pos Position, comment strin
 	// no need for inc.mu.Lock() since nothing else can access this inc
 	matches := make([]string, 0)
 	for i := range directives {
-		var path string
-		if filepath.IsAbs(directives[i]) {
-			path = directives[i]
+		// XXX: hacky way to handle quotes
+		path := strings.Trim(directives[i], `"`)
+		if filepath.IsAbs(path) {
+			// nothing to do
+		} else if strings.HasPrefix(path, "~/") {
+			path = filepath.Join(homedir(), strings.TrimPrefix(path, "~/"))
 		} else if system {
-			path = filepath.Join("/etc/ssh", directives[i])
+			path = filepath.Join("/etc/ssh", path)
 		} else {
-			path = filepath.Join(homedir(), ".ssh", directives[i])
+			path = filepath.Join(homedir(), ".ssh", path)
 		}
 		theseMatches, err := filepath.Glob(path)
 		if err != nil {
